@@ -1,0 +1,6 @@
+Flask
+Flask-SQLAlchemy
+SQLAlchemy
+pytz
+openpyxl
+email-validator

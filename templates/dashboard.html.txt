@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard FIFA 25</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #4CAF50; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🎮 Dashboard FIFA 25 - Bot em Tempo Real</h1>
+  <p><strong>Última atualização:</strong> {{ last_update }}</p>
+
+  <h2>📺 Partidas ao vivo</h2>
+  {% if current_matches %}
+  <table>
+    <thead>
+      <tr>
+        <th>Jogador</th><th>Time</th><th>Adversário</th><th>Gols</th><th>Vitória?</th><th>Horário</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in current_matches %}
+      <tr>
+        <td>{{ match.player }}</td>
+        <td>{{ match.team }}</td>
+        <td>{{ match.opponent }}</td>
+        <td>{{ match.goals }}</td>
+        <td>{{ '✅' if match.win else '❌' }}</td>
+        <td>{{ match.time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>⚠️ Nenhuma partida ao vivo no momento.</p>
+  {% endif %}
+
+  <h2>📊 Estatísticas do dia</h2>
+  <ul>
+    <li>Total de partidas: {{ stats.total_matches }}</li>
+    <li>Total de jogadores únicos: {{ stats.total_players }}</li>
+  </ul>
+</body>
+</html>
