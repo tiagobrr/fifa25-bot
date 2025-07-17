@@ -316,4 +316,6 @@ def start_monitoring_thread():
 # Start monitoring on app startup
 with app.app_context():
     start_monitoring_thread()
-
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 10000))  # PORT é usada no Render automaticamente
+    app.run(host='0.0.0.0', port=port)
