@@ -1,4 +1,4 @@
-from extensions import db
+from main import db
 from sqlalchemy import Column, Integer, String, Boolean, Date
 
 class Match(db.Model):
