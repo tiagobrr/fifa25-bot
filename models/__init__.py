@@ -1,6 +1,5 @@
-
-from your_app_name import db
-from sqlalchemy import Column, Integer, String, Boolean, Date, Time
+from extensions import db
+from sqlalchemy import Column, Integer, String, Boolean, Date
 
 class Match(db.Model):
     id = db.Column(db.Integer, primary_key=True)
