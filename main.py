@@ -41,7 +41,7 @@ bot_running = False
 # Configurações
 MONITORED_PLAYERS = ["uncle", "Koftovsky", "cl1vlind", "wboy", "nikkitta", "Boki", "Bolec", "Giox", "Cevuu", "Glumac",
     "volvo", "nekishka", "Cavempt", "bodyaoo", "noeN",
-    "v1nniePuh", "Goldfer", "tohi4", "maksdh", "Noitexx", "Steksy"]
+    "v1nniePuh", "Goldfer", "tohi4", "maksdh", "Noitexx" , "Samurai", "Steksy"]
 
 VALID_LEAGUES = ["Liga 1", "Europa League", "Premier League", "International A", "Seria A", "Champions League B"]
 
