@@ -1,83 +1,72 @@
-import time
-from datetime import datetime
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
-from models import Match
-from constants import Players_fifa25, Teams_fifa25, Stadiums_fifa25, Leagues_fifa25
+from selenium.webdriver.chrome.webdriver import WebDriver
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
-URL = "https://football.esportsbattle.com"
 
-def create_driver():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    return webdriver.Chrome(options=chrome_options)
+class FIFA25Scraper:
+    def __init__(self):
+        self.driver = self.init_driver()
 
-def get_live_matches():
-    driver = create_driver()
-    driver.get(URL)
-    time.sleep(5)  # aguarda o carregamento dos cards
+    def init_driver(self) -> WebDriver:
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920x1080")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--disable-infobars")
 
-    matches = []
-    cards = driver.find_elements(By.CSS_SELECTOR, ".match-card")
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
 
-    for card in cards:
-        try:
-            # Times
-            teams = card.find_elements(By.CSS_SELECTOR, ".match-card__team-name")
-            if len(teams) != 2:
-                continue
-            team1 = teams[0].text.strip()
-            team2 = teams[1].text.strip()
-            if team1 not in Teams_fifa25 or team2 not in Teams_fifa25:
-                continue
+    def get_live_matches(self):
+        url = "https://football.esportsbattle.com"
+        self.driver.get(url)
+        time.sleep(5)  # Espera carregar o JavaScript
 
-            # Jogadores
-            players = card.find_elements(By.CSS_SELECTOR, ".match-card__player-nick")
-            if len(players) != 2:
-                continue
-            player1 = players[0].text.strip()
-            player2 = players[1].text.strip()
-            if player1 not in Players_fifa25 or player2 not in Players_fifa25:
-                continue
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        matches = []
 
-            # Data/Hora
-            raw_time = card.find_element(By.CSS_SELECTOR, ".match-card__time").text.strip()
-            match_time = datetime.strptime(raw_time, "%H:%M")
+        match_cards = soup.select("div.matches-list__match")
+        for card in match_cards:
+            try:
+                status = card.select_one("div.match__status").text.strip()
+                if status.lower() != "live":
+                    continue
 
-            # Estádio
-            stadium_elem = card.find_element(By.CSS_SELECTOR, ".match-card__stadium")
-            stadium = stadium_elem.text.strip() if stadium_elem else "Unknown"
-            if stadium not in Stadiums_fifa25:
-                continue
+                time_match = card.select_one("div.match__time").text.strip()
+                stadium = card.select_one("div.match__stadium").text.strip()
+                league = card.select_one("div.match__tournament").text.strip()
 
-            # Liga
-            league_elem = card.find_element(By.CSS_SELECTOR, ".match-card__tournament-name")
-            league = league_elem.text.strip() if league_elem else "Unknown"
-            if league not in Leagues_fifa25:
-                continue
+                team1 = card.select_one("div.match__team--left div.match__team-name").text.strip()
+                team2 = card.select_one("div.match__team--right div.match__team-name").text.strip()
 
-            # Objeto Match (sem placar e winner pois ainda está ao vivo)
-            match = Match(
-                team1=team1,
-                team2=team2,
-                player1=player1,
-                player2=player2,
-                datetime=datetime.now(),  # pode ajustar para usar match_time
-                score1=None,
-                score2=None,
-                winner=None,
-                stadium=stadium,
-                league=league,
-                source="live"
-            )
-            matches.append(match)
+                player1 = card.select_one("div.match__team--left div.match__team-player").text.strip()
+                player2 = card.select_one("div.match__team--right div.match__team-player").text.strip()
 
-        except Exception as e:
-            print(f"[❌] Erro ao processar card: {e}")
-            continue
+                match_data = {
+                    "status": status,
+                    "time": time_match,
+                    "stadium": stadium,
+                    "league": league,
+                    "team1": team1,
+                    "team2": team2,
+                    "player1": player1,
+                    "player2": player2,
+                }
+                matches.append(match_data)
+            except Exception:
+                continue  # Ignora erros em algum card malformado
 
-    driver.quit()
-    return matches
+        return matches
+
+    def close(self):
+        self.driver.quit()
+
