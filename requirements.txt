@@ -1,10 +1,10 @@
-Flask
-Flask-SQLAlchemy
-SQLAlchemy
+flask
+flask_sqlalchemy
 openpyxl
 email-validator
 beautifulsoup4
 requests
 selenium
 webdriver-manager
-
+python-dotenv
+pytz
