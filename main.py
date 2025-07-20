@@ -349,5 +349,16 @@ def start_monitoring_thread():
         thread.daemon = True
         thread.start()
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    from threading import Thread
+
+    # Inicia o bot de scraping em uma thread separada
+    def run_scraper():
+        while True:
+            get_live_matches()
+            time.sleep(60)
+
+    Thread(target=run_scraper).start()
+
+    # Inicia o servidor Flask
+    app.run(host="0.0.0.0", port=5000)
