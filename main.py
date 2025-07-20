@@ -1,5 +1,6 @@
 import os
 import logging
+from web_scraper import get_live_matches
 from flask import Flask, render_template, jsonify, request, flash, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
