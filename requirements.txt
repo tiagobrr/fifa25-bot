@@ -1,6 +1,9 @@
 Flask
 Flask-SQLAlchemy
 SQLAlchemy
-pytz
 openpyxl
 email-validator
+beautifulsoup4
+requests
+
+
