@@ -1,10 +1,11 @@
-#!/bin/bash
-apt-get update
-apt-get install -y wget unzip
+#!/usr/bin/env bash
+set -eux
 
-# Instala o Google Chrome
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-apt install -y ./google-chrome-stable_current_amd64.deb
+# Baixa o Chrome diretamente e extrai
+wget https://storage.googleapis.com/chrome-for-testing-public/124.0.6367.91/linux64/chrome-linux64.zip
+unzip chrome-linux64.zip
+mv chrome-linux64 /opt/chrome
 
-# Confirma a instalação
-google-chrome --version
+# Exporta as variáveis de ambiente para o Chrome headless funcionar
+echo "export CHROME_BIN=/opt/chrome/chrome" >> ~/.bashrc
+echo "export PATH=$PATH:/opt/chrome" >> ~/.bashrc
