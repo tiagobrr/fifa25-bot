@@ -1,49 +1,35 @@
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import time
-from datetime import datetime
-import pytz
+import logging
 
 def create_driver():
     options = uc.ChromeOptions()
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+
+    # 🚨 Caminho fixo do Chrome no Render
+    options.binary_location = "/usr/bin/google-chrome"
+
     return uc.Chrome(options=options)
 
 def get_live_matches():
+    url = "https://football.esportsbattle.com/"
     driver = create_driver()
-    driver.get("https://football.esportsbattle.com")
-    time.sleep(7)
+    driver.get(url)
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    cards = soup.find_all("div", class_="live-match-item")
+    time.sleep(7)  # ou use WebDriverWait para mais precisão
 
-    matches = []
-    for card in cards:
-        try:
-            league = card.select_one(".match-league").text.strip()
-            stadium = card.select_one(".match-location").text.strip()
-            datetime_str = card.select_one(".match-date").text.strip()
-            dt = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
-            dt = pytz.timezone("Europe/Kiev").localize(dt)
+    page_source = driver.page_source
+    soup = BeautifulSoup(page_source, "html.parser")
+    matches = soup.find_all("div", class_="match")
 
-            players = card.select(".match-item .team .player-name")
-            teams = card.select(".match-item .team .team-name")
-            if len(players) == 2 and len(teams) == 2:
-                match = {
-                    "datetime": dt,
-                    "league": league,
-                    "stadium": stadium,
-                    "player1": players[0].text.strip(),
-                    "team1": teams[0].text.strip(),
-                    "player2": players[1].text.strip(),
-                    "team2": teams[1].text.strip()
-                }
-                matches.append(match)
-        except Exception as e:
-            print(f"Erro ao processar card: {e}")
+    print(f"🔍 {len(matches)} partidas encontradas")
 
     driver.quit()
     return matches
