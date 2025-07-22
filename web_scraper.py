@@ -1,51 +1,49 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time
+from datetime import datetime
+import pytz
+
+def create_driver():
+    options = uc.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    return uc.Chrome(options=options)
 
 def get_live_matches():
-    url = "https://football.esportsbattle.com/"
-
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=chrome_options
-    )
-
-    driver.get(url)
-    time.sleep(5)  # tempo para o site carregar
+    driver = create_driver()
+    driver.get("https://football.esportsbattle.com")
+    time.sleep(7)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
-    cards = soup.find_all("div", class_="match-card")
+    cards = soup.find_all("div", class_="live-match-item")
 
     matches = []
     for card in cards:
         try:
-            league = card.find("div", class_="match__league").text.strip()
-            date_time = card.find("div", class_="match__date").text.strip()
-            stadium = card.find("div", class_="match__stadium").text.strip()
-            teams = [team.text.strip() for team in card.find_all("div", class_="match__team-name")]
-            players = [p.text.strip() for p in card.find_all("div", class_="match__player-nick")]
+            league = card.select_one(".match-league").text.strip()
+            stadium = card.select_one(".match-location").text.strip()
+            datetime_str = card.select_one(".match-date").text.strip()
+            dt = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M")
+            dt = pytz.timezone("Europe/Kiev").localize(dt)
 
-            match = {
-                "league": league,
-                "datetime": date_time,
-                "stadium": stadium,
-                "team1": teams[0] if len(teams) > 0 else "",
-                "team2": teams[1] if len(teams) > 1 else "",
-                "player1": players[0] if len(players) > 0 else "",
-                "player2": players[1] if len(players) > 1 else "",
-            }
-            matches.append(match)
+            players = card.select(".match-item .team .player-name")
+            teams = card.select(".match-item .team .team-name")
+            if len(players) == 2 and len(teams) == 2:
+                match = {
+                    "datetime": dt,
+                    "league": league,
+                    "stadium": stadium,
+                    "player1": players[0].text.strip(),
+                    "team1": teams[0].text.strip(),
+                    "player2": players[1].text.strip(),
+                    "team2": teams[1].text.strip()
+                }
+                matches.append(match)
         except Exception as e:
-            print("Erro ao processar um card:", e)
+            print(f"Erro ao processar card: {e}")
 
     driver.quit()
     return matches
-
