@@ -1,64 +1,31 @@
-from bs4 import BeautifulSoup
-import pandas as pd
-from datetime import datetime
-from selenium.webdriver.common.by import By
-import undetected_chromedriver as uc
+from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
 import time
 
 def create_driver():
     options = Options()
     options.add_argument("--headless")
-    options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
-    options.binary_location = "/opt/chrome/chrome"  # Caminho correto no Render
-    return uc.Chrome(options=options)
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
+    options.binary_location = "/usr/bin/google-chrome-stable"
+    return webdriver.Chrome(options=options)
 
-def get_live_matches():
-    url = "https://football.esportsbattle.com"
+def main():
     driver = create_driver()
-    driver.get(url)
-    time.sleep(7)
+    driver.get("https://football.esportsbattle.com")
+    time.sleep(7)  # aguarda carregar os cards
 
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    matches = soup.find_all("div", class_="match-card")
+    cards = driver.find_elements(By.CSS_SELECTOR, ".match-card")
+    print(f"Total de cards encontrados: {len(cards)}")
 
-    partidas = []
-    data_coleta = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    for match in matches:
-        try:
-            team_names = match.find_all("div", class_="participant__nickname")
-            if len(team_names) != 2:
-                continue
-
-            team1 = team_names[0].text.strip()
-            team2 = team_names[1].text.strip()
-
-            players = match.find_all("div", class_="participant__name")
-            player1 = players[0].text.strip()
-            player2 = players[1].text.strip()
-
-            league = match.find("div", class_="match__league").text.strip()
-            stadium = match.find("div", class_="match__stadium").text.strip()
-            datetime_real = match.find("div", class_="match__date").text.strip()
-
-            partidas.append({
-                "horario_coleta": data_coleta,
-                "player1": player1,
-                "player2": player2,
-                "team1": team1,
-                "team2": team2,
-                "league": league,
-                "stadium": stadium,
-                "datetime_real": datetime_real
-            })
-
-        except Exception as e:
-            print("Erro ao processar uma partida:", e)
+    for card in cards:
+        print(card.text)
+        print("-----")
 
     driver.quit()
 
-    df = pd.DataFrame(partidas)
-    df.to_csv("partidas_ao_vivo.csv", index=False)
-    print(f"{len(df)} partidas salvas com sucesso.")
+if __name__ == "__main__":
+    main()
